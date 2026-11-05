@@ -351,13 +351,21 @@
   function renderMode() {
     const pill = $("mode-pill");
     document.body.classList.toggle("is-editor", hasGitHub() || local.length > 0);
-    if (hasGitHub()) {
-      pill.className = "mode-pill is-live";
-      pill.textContent = (hasClaude() ? "Claude cleanup" : "Basic cleanup") + " · publishes live";
-    } else {
+    const clean = hasClaude() ? "Claude cleanup" : "Basic cleanup";
+    if (!hasGitHub()) {
       pill.className = "mode-pill is-local";
-      pill.textContent = (hasClaude() ? "Claude cleanup" : "Basic cleanup") + " · saves to this browser";
+      pill.textContent = "Not connected · saves to this browser only · Connect";
+    } else if (conn.state === "error") {
+      pill.className = "mode-pill is-error";
+      pill.textContent = "Connection problem · Fix";
+    } else if (conn.state === "checking") {
+      pill.className = "mode-pill";
+      pill.textContent = "Checking connection…";
+    } else {
+      pill.className = "mode-pill is-live";
+      pill.textContent = "✓ Connected · " + clean + " · saves to calendar";
     }
+    pill.title = conn.msg || "Editor settings";
   }
 
   function showBanner(msg) { const b = $("banner"); b.textContent = msg; b.hidden = !msg; }
@@ -495,7 +503,17 @@
       flashId = item.id;
       render();
     } catch (err) {
-      alert("Couldn't save: " + err.message);
+      if (isNew) {
+        local.unshift(item);
+        store.set(LOCAL_KEY, local);
+        $("edit-dialog").close();
+        $("blurb").value = "";
+        intakeMsg("Couldn't reach GitHub (" + err.message + "), so the idea is saved in this browser for now. It will go to the calendar the next time you click Save & connect.", true);
+        flashId = item.id;
+        render();
+      } else {
+        alert("Couldn't save: " + err.message);
+      }
     } finally {
       btn.disabled = false;
       btn.textContent = isNew ? "Add to calendar" : "Save changes";
@@ -542,37 +560,136 @@
     render();
   }));
 
-  // Settings
-  $("settings-btn").addEventListener("click", () => {
+  // ---------- Settings & connection ----------
+  let conn = { state: "none", msg: "" }; // none | checking | ok | error
+
+  /** Confirm the saved keys work so the owner knows ideas will persist. */
+  async function verifyConnection() {
+    if (!hasGitHub()) { conn = { state: "none", msg: "" }; renderMode(); return; }
+    conn = { state: "checking", msg: "Checking connection…" };
+    renderMode();
+    const problems = [];
+    try {
+      const res = await fetch(`https://api.github.com/repos/${settings.repo}`, { headers: ghHeaders(), cache: "no-store" });
+      if (!res.ok) throw new Error(await ghError(res));
+      const repo = await res.json();
+      if (repo.permissions && repo.permissions.push === false) throw new Error("this token can't write to " + settings.repo);
+      await ghGetFile();
+    } catch (e) {
+      problems.push("GitHub: " + e.message);
+    }
+    if (hasClaude()) {
+      try {
+        const res = await fetch("https://api.anthropic.com/v1/models?limit=1", {
+          headers: { "x-api-key": settings.anthropicKey, "anthropic-version": "2026-10-21", "anthropic-dangerous-direct-browser-access": "true" },
+        });
+        if (!res.ok) {
+          const j = await res.json().catch(() => ({}));
+          throw new Error((j.error && j.error.message) || "HTTP " + res.status);
+        }
+      } catch (e) {
+        problems.push("Anthropic key: " + e.message + " (the basic cleaner will be used)");
+      }
+    }
+    conn = problems.length && problems[0].startsWith("GitHub")
+      ? { state: "error", msg: problems.join(" · ") }
+      : { state: "ok", msg: "Connected. New ideas save to " + settings.repo + "." + (problems.length ? " " + problems.join(" · ") : "") };
+    renderMode();
+  }
+
+  function setupLink() {
+    const payload = b64encode(JSON.stringify({ g: settings.githubToken, a: settings.anthropicKey, r: settings.repo }));
+    return location.origin + location.pathname + "#connect=" + encodeURIComponent(payload);
+  }
+  /** Accepts a full setup link or just the code after #connect= */
+  function parseSetup(text) {
+    const m = String(text || "").trim().match(/(?:#connect=)?([A-Za-z0-9+/=%_-]{20,})\s*$/);
+    if (!m) return null;
+    try {
+      const j = JSON.parse(b64decode(decodeURIComponent(m[1])));
+      if (!j.g) return null;
+      return { githubToken: j.g, anthropicKey: j.a || "", repo: j.r || DEFAULT_REPO };
+    } catch (e) { return null; }
+  }
+
+  function saveSettings(next) {
+    settings = next;
+    if (!store.set(SETTINGS_KEY, settings)) {
+      alert("This browser is blocking storage (private mode?), so it will forget the connection when you close it.");
+    }
+  }
+
+  function fillSettingsForm() {
     $("s-anthropic").value = settings.anthropicKey;
     $("s-github").value = settings.githubToken;
     $("s-repo").value = settings.repo;
-    $("settings-dialog").showModal();
-  });
+    $("s-setup").value = "";
+    $("s-manual").open = !hasGitHub();
+    $("s-share").hidden = !hasGitHub();
+    $("s-native").hidden = !navigator.share;
+    const st = $("s-status");
+    st.hidden = conn.state === "none";
+    st.className = "conn-status is-" + conn.state;
+    st.textContent = conn.msg;
+  }
+  function openSettings() { fillSettingsForm(); $("settings-dialog").showModal(); }
+
+  $("settings-btn").addEventListener("click", openSettings);
+  $("mode-pill").addEventListener("click", openSettings);
   $("s-cancel").addEventListener("click", () => $("settings-dialog").close());
   $("s-clear").addEventListener("click", () => {
+    if (!confirm("Disconnect this device? Your ideas stay saved in the calendar.")) return;
     settings = { anthropicKey: "", githubToken: "", repo: DEFAULT_REPO };
     store.del(SETTINGS_KEY);
     $("settings-dialog").close();
     boot();
   });
+  $("s-copy").addEventListener("click", async () => {
+    const link = setupLink();
+    try { await navigator.clipboard.writeText(link); $("s-copy").textContent = "Copied ✓"; }
+    catch (e) { prompt("Copy this setup link:", link); }
+    setTimeout(() => { $("s-copy").textContent = "Copy setup link"; }, 2000);
+  });
+  $("s-native").addEventListener("click", () => {
+    navigator.share({ title: "Chaotic Era calendar setup link", url: setupLink() }).catch(() => {});
+  });
   $("settings-form").addEventListener("submit", async (e) => {
     e.preventDefault();
-    settings = {
-      anthropicKey: $("s-anthropic").value.trim(),
-      githubToken: $("s-github").value.trim(),
-      repo: $("s-repo").value.trim() || DEFAULT_REPO,
-    };
-    if (!store.set(SETTINGS_KEY, settings)) alert("This browser blocked storage, so the keys will be forgotten when you leave.");
-    $("settings-dialog").close();
+    const fromLink = $("s-setup").value.trim();
+    let next;
+    if (fromLink) {
+      next = parseSetup(fromLink);
+      if (!next) { alert("That setup link doesn't look right. Copy it again from your other device."); return; }
+    } else {
+      next = {
+        anthropicKey: $("s-anthropic").value.trim(),
+        githubToken: $("s-github").value.trim(),
+        repo: $("s-repo").value.trim() || DEFAULT_REPO,
+      };
+    }
+    saveSettings(next);
+    $("s-save").disabled = true;
     await boot();
-    if (hasGitHub() && local.length && confirm(`Publish the ${local.length} idea(s) saved in this browser to GitHub?`)) {
-      try { await publishLocal(); render(); } catch (err) { alert("Couldn't publish: " + err.message); }
+    $("s-save").disabled = false;
+    fillSettingsForm();
+    if (conn.state === "ok") {
+      if (local.length && confirm(`Save the ${local.length} idea(s) from this browser to the shared calendar?`)) {
+        try { await publishLocal(); render(); } catch (err) { alert("Couldn't save them: " + err.message); }
+      }
+      setTimeout(() => $("settings-dialog").close(), 900);
     }
   });
 
   // ---------- Boot ----------
   async function boot() {
+    const fromHash = location.hash.startsWith("#connect=") ? parseSetup(location.hash) : null;
+    if (location.hash.startsWith("#connect=")) {
+      history.replaceState(null, "", location.pathname + location.search); // keep keys out of the address bar
+      if (fromHash) saveSettings(fromHash);
+      else showBanner("That setup link didn't work. Copy it again from your other device.");
+    }
+    const verifying = hasGitHub() ? verifyConnection() : null;
+    if (!verifying) conn = { state: "none", msg: "" };
     try {
       published = await loadPublished();
       if (!hasGitHub()) showBanner("");
@@ -580,6 +697,10 @@
       showBanner("Couldn't load the calendar (" + err.message + ").");
     }
     render();
+    if (verifying) {
+      await verifying;
+      if (fromHash && conn.state === "ok") intakeMsg("This device is connected. Ideas you add here save to the shared calendar.");
+    }
   }
   boot();
 })();

@@ -1,0 +1,10 @@
+{
+  "name": "Chaotic Era Editorial Calendar",
+  "short_name": "CE Calendar",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fafcff",
+  "theme_color": "#419eff",
+  "icons": [{ "src": "assets/logo.png", "sizes": "256x256", "type": "image/png" }]
+}

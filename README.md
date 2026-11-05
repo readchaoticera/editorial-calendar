@@ -12,14 +12,22 @@ It's a static site (no build step): `index.html`, `styles.css`, `app.js`, and th
 
 The repo has to be public for Pages on a free plan.
 
-## Adding ideas from the page
+## Adding ideas from any device
 
-Anyone can view the calendar. Only you can change it. Click **⚙ Editor** and paste in:
+Anyone can view the calendar. Only you can change it. Once a device is **connected**, every idea you add, edit or delete is committed to `data/ideas.json` in this repo. That means it's in the table on every device and in every future session.
 
-- **Anthropic API key** (optional). With it, Claude cleans up your messy blurb into a working title, an angle, bullet notes, links and a category. It reuses an existing category or makes a new one. Without a key, a simpler built-in cleaner does the job.
-- **GitHub token** (optional, but needed to publish). Create a [fine-grained token](https://github.com/settings/personal-access-tokens/new) scoped to **only this repository**, with **Contents: Read and write**. Each add, edit or delete is committed to `data/ideas.json`, and the public page updates about a minute later.
+**First device (one-time setup)**
+1. Create a [fine-grained GitHub token](https://github.com/settings/personal-access-tokens/new). Set **Repository access** to only `readchaoticera/editorial-calendar`, set **Permissions → Contents** to **Read and write**, and pick a long expiration.
+2. On the site, click **⚙ Editor → Or enter keys by hand**. Paste the token, and optionally an Anthropic API key so Claude does the cleanup. Click **Save & connect**. The badge turns green: "✓ Connected".
 
-Both keys are stored only in your browser's local storage. They never go into the page or the repo. Use **Forget keys** to remove them. Without a GitHub token, new ideas are saved in that browser only. The next time you save a token, the page offers to publish them.
+**Every other device (phone, laptop)**
+1. On a connected device, open **⚙ Editor → Copy setup link** and send it to yourself privately (AirDrop, Notes, a text to yourself).
+2. Open the link on the other device. It connects and removes the keys from the address bar.
+3. On iPhone, a home-screen app has its own storage separate from Safari. If you use **Share → Add to Home Screen**, open the app, go to **⚙ Editor**, paste the setup link into **Quick connect**, and tap **Save & connect**.
+
+The setup link contains your keys, so never post it publicly. If a link ever leaks, revoke the GitHub token and the Anthropic key, then make new ones.
+
+If GitHub can't be reached when you add an idea, the idea is kept in that browser. It's sent to the calendar the next time you click **Save & connect**. **Forget keys** disconnects a device; your ideas stay in the calendar.
 
 ## Data format
 

@@ -113,6 +113,18 @@ main { max-width: 1120px; margin: 0 auto; padding: 0 24px 64px; }
 }
 .mode-pill.is-live { background: #e8f6ee; color: var(--green); border-color: #bfe5cd; }
 .mode-pill.is-local { background: #fff8e8; color: #6b4e16; border-color: #f0d9a6; }
+.mode-pill.is-error { background: #fdeaea; color: #8b1c1c; border-color: #f6cccc; }
+button.mode-pill { font-family: var(--sans); background-color: var(--paper-card); cursor: pointer; }
+button.mode-pill:hover { border-color: var(--accent); }
+.conn-status { font-size: 0.84rem; font-weight: 600; padding: 9px 12px; border-radius: 8px; background: #eef1f5; color: var(--ink-soft); }
+.conn-status.is-ok { background: #e8f6ee; color: var(--green); }
+.conn-status.is-error { background: #fdeaea; color: #8b1c1c; }
+.dialog details.manual { border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; }
+.dialog details.manual[open] { display: flex; flex-direction: column; gap: 12px; padding-bottom: 12px; }
+.dialog details.manual summary { cursor: pointer; font-size: 0.84rem; font-weight: 600; color: var(--ink-soft); }
+.share-box { background: var(--accent-soft); border-radius: 10px; padding: 12px 14px; font-size: 0.88rem; }
+.share-box p { margin: 4px 0 10px; }
+.share-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
 /* ---------- Controls ---------- */
 .controls {

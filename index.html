@@ -6,6 +6,11 @@
     <title>Editorial Calendar · Chaotic Era</title>
     <link rel="icon" type="image/png" href="assets/logo.png" />
     <link rel="apple-touch-icon" href="assets/logo.png" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#419eff" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="CE Calendar" />
     <meta
       name="description"
       content="What's coming up in Chaotic Era: the editorial calendar and idea bank for the newsletter on politics, media and online influence."
@@ -48,7 +53,7 @@
       <section class="intake" aria-labelledby="intake-title">
         <div class="intake-head">
           <h2 id="intake-title">Drop in a messy idea</h2>
-          <span id="mode-pill" class="mode-pill"></span>
+          <button id="mode-pill" class="mode-pill" type="button" title="Editor settings"></button>
         </div>
         <p class="intake-sub">
           Type it how it's in your head: fragments, links, half-sentences. It gets cleaned up into
@@ -186,28 +191,42 @@
     <dialog id="settings-dialog" class="dialog">
       <form method="dialog" id="settings-form">
         <h2>Editor settings</h2>
+        <div id="s-status" class="conn-status" hidden></div>
         <p class="settings-note">
-          These keys are saved only in this browser (never in the page or the repo). Visitors
-          without them see the public calendar and can't change it.
+          Once connected, everything you add is saved to the shared calendar, so it's there on any
+          device and in every future session. Keys stay in this browser only, never in the page or the repo.
         </p>
-        <label>Anthropic API key <span class="hint-text">for AI cleanup</span>
-          <input id="s-anthropic" type="password" autocomplete="off" placeholder="sk-ant-…" />
+        <label>Quick connect <span class="hint-text">paste a setup link from your other device</span>
+          <input id="s-setup" type="text" autocomplete="off" placeholder="https://readchaoticera.github.io/editorial-calendar/#connect=…" />
         </label>
-        <label>GitHub token <span class="hint-text">fine-grained, Contents: read &amp; write on this repo only</span>
-          <input id="s-github" type="password" autocomplete="off" placeholder="github_pat_…" />
-        </label>
-        <label>Repository <span class="hint-text">owner/name</span>
-          <input id="s-repo" type="text" placeholder="readchaoticera/editorial-calendar" />
-        </label>
-        <p class="settings-note small">
-          Without a GitHub token, ideas you add are kept in this browser only. Without an Anthropic
-          key, a simple built-in cleaner is used instead of Claude.
-        </p>
+        <details class="manual" id="s-manual">
+          <summary>Or enter keys by hand</summary>
+          <label>GitHub token <span class="hint-text">fine-grained, this repo only, Contents: read &amp; write. Required to save</span>
+            <input id="s-github" type="password" autocomplete="off" placeholder="github_pat_…" />
+          </label>
+          <label>Anthropic API key <span class="hint-text">optional, for Claude cleanup</span>
+            <input id="s-anthropic" type="password" autocomplete="off" placeholder="sk-ant-…" />
+          </label>
+          <label>Repository <span class="hint-text">owner/name</span>
+            <input id="s-repo" type="text" placeholder="readchaoticera/editorial-calendar" />
+          </label>
+        </details>
+        <div id="s-share" class="share-box" hidden>
+          <strong>Connect your phone or another computer</strong>
+          <p class="settings-note small">
+            This link holds your keys. Send it only to yourself (AirDrop, Notes, a text to yourself)
+            and never post it. Open it on the other device, or paste it into Quick connect there.
+          </p>
+          <div class="share-actions">
+            <button type="button" id="s-copy" class="export-btn">Copy setup link</button>
+            <button type="button" id="s-native" class="export-btn" hidden>Share…</button>
+          </div>
+        </div>
         <div class="dialog-actions">
           <button type="button" id="s-clear" class="danger-btn">Forget keys</button>
           <span class="spacer"></span>
           <button type="button" id="s-cancel" class="export-btn">Cancel</button>
-          <button type="submit" class="primary-btn">Save</button>
+          <button type="submit" id="s-save" class="primary-btn">Save &amp; connect</button>
         </div>
       </form>
     </dialog>
