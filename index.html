@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Editorial Calendar · Chaotic Era</title>
+    <link rel="icon" type="image/png" href="assets/logo.png" />
+    <link rel="apple-touch-icon" href="assets/logo.png" />
+    <meta
+      name="description"
+      content="What's coming up in Chaotic Era: the editorial calendar and idea bank for the newsletter on politics, media and online influence."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="masthead">
+      <div class="masthead-inner">
+        <a class="brand" href="https://chaoticera.news" target="_blank" rel="noopener">
+          <img class="brand-logo" src="assets/logo.png" alt="Chaotic Era logo" width="40" height="40" />
+          <span class="brand-name">Chaotic Era</span>
+        </a>
+        <div class="masthead-actions">
+          <button id="settings-btn" class="ghost-btn" type="button" title="Editor settings">⚙ Editor</button>
+          <a class="subscribe-btn" href="https://chaoticera.news/subscribe" target="_blank" rel="noopener">Subscribe</a>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <p class="kicker">The Chaotic Era Editorial Calendar</p>
+        <h1>What's Coming Next</h1>
+        <p class="dek">
+          Upcoming issues and loose ideas for <strong>Chaotic Era</strong>, the newsletter on
+          politics, media and online influence by Kyle Tharp. Every issue starts as a messy note.
+        </p>
+      </section>
+
+      <section class="stats" id="stats" aria-label="Calendar summary"></section>
+
+      <!-- ---------- Idea intake ---------- -->
+      <section class="intake" aria-labelledby="intake-title">
+        <div class="intake-head">
+          <h2 id="intake-title">Drop in a messy idea</h2>
+          <span id="mode-pill" class="mode-pill"></span>
+        </div>
+        <p class="intake-sub">
+          Type it how it's in your head: fragments, links, half-sentences. It gets cleaned up into
+          an angle, bullet notes and a category, and you can edit it before it's added.
+        </p>
+        <form id="intake-form">
+          <textarea
+            id="blurb"
+            rows="5"
+            placeholder="e.g. trump tiktok account basically dead?? engagement way down since summer. maybe compare w/ newsom + aoc numbers. talk to ppl at turning point. https://…"
+            required
+          ></textarea>
+          <div class="intake-actions">
+            <label class="status-pick">
+              Add as
+              <select id="blurb-status">
+                <option value="idea">Idea</option>
+                <option value="upcoming">Upcoming</option>
+              </select>
+            </label>
+            <button id="clean-btn" class="primary-btn" type="submit">Clean it up →</button>
+          </div>
+        </form>
+        <div id="intake-msg" class="intake-msg" hidden></div>
+      </section>
+
+      <!-- ---------- Controls ---------- -->
+      <div class="controls">
+        <div class="tabs" role="tablist" aria-label="Status">
+          <button class="tab is-active" role="tab" data-status="all">All</button>
+          <button class="tab" role="tab" data-status="upcoming">Upcoming</button>
+          <button class="tab" role="tab" data-status="idea">Idea bank</button>
+          <button class="tab" role="tab" data-status="drafting">Drafting</button>
+          <button class="tab" role="tab" data-status="published">Published</button>
+        </div>
+        <div class="tools">
+          <input id="search" type="search" class="search" placeholder="Search ideas, notes, people…" aria-label="Search ideas" />
+          <span id="meta" class="meta"></span>
+          <button id="export" type="button" class="export-btn" title="Download the visible rows as a CSV file">↓ Export CSV</button>
+        </div>
+      </div>
+      <div id="cat-filter" class="cat-filter" aria-label="Filter by category"></div>
+
+      <div id="banner" class="banner" hidden></div>
+
+      <div class="table-wrap">
+        <table id="calendar">
+          <thead>
+            <tr>
+              <th class="sortable col-status" data-key="status">Status</th>
+              <th class="sortable col-angle" data-key="title">Issue &amp; angle</th>
+              <th class="col-notes">Notes</th>
+              <th class="sortable col-cat" data-key="category">Category</th>
+              <th class="col-edit editor-only"><span class="sr-only">Edit</span></th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+        <p id="empty" class="empty" hidden>Nothing matches that filter.</p>
+      </div>
+
+      <aside class="cta">
+        <p>
+          Want these in your inbox when they land? Join <strong>16,000+</strong> political and media
+          insiders.
+          <a href="https://www.chaoticera.news" target="_blank" rel="noopener">Subscribe to Chaotic Era here &raquo;</a>
+        </p>
+      </aside>
+    </main>
+
+    <footer class="site-footer">
+      <p>
+        Built by <a href="https://chaoticera.news" target="_blank" rel="noopener">Chaotic Era</a> ·
+        Politics, media &amp; online influence by Kyle Tharp. Plans change; ideas here may never run.
+      </p>
+    </footer>
+
+    <!-- ---------- Review / edit dialog ---------- -->
+    <dialog id="edit-dialog" class="dialog">
+      <form method="dialog" id="edit-form">
+        <h2 id="edit-title">Review the cleaned-up idea</h2>
+        <p id="edit-source" class="edit-source" hidden></p>
+        <label>Working title
+          <input id="f-title" type="text" required />
+        </label>
+        <label>Overarching question / angle
+          <textarea id="f-angle" rows="2" required></textarea>
+        </label>
+        <label>Notes <span class="hint-text">one per line</span>
+          <textarea id="f-notes" rows="6"></textarea>
+        </label>
+        <label>Links <span class="hint-text">one per line</span>
+          <textarea id="f-links" rows="2"></textarea>
+        </label>
+        <div class="row-2">
+          <label>Category <span class="hint-text">pick one or type a new one</span>
+            <input id="f-category" type="text" list="cat-list" required />
+            <datalist id="cat-list"></datalist>
+          </label>
+          <label>Status
+            <select id="f-status">
+              <option value="idea">Idea</option>
+              <option value="upcoming">Upcoming</option>
+              <option value="drafting">Drafting</option>
+              <option value="published">Published</option>
+            </select>
+          </label>
+        </div>
+        <div class="row-2">
+          <label>Target date <span class="hint-text">optional</span>
+            <input id="f-date" type="text" placeholder="e.g. 7/14 or Dec 2" />
+          </label>
+          <label>Series <span class="hint-text">optional</span>
+            <input id="f-series" type="text" placeholder="e.g. Post-election takes" />
+          </label>
+        </div>
+        <div class="row-2">
+          <label>Draft link <span class="hint-text">optional</span>
+            <input id="f-draft" type="url" placeholder="https://" />
+          </label>
+          <label class="check">
+            <input id="f-viz" type="checkbox" /> Features original data viz
+          </label>
+        </div>
+        <div class="dialog-actions">
+          <button type="button" id="delete-btn" class="danger-btn" hidden>Delete</button>
+          <span class="spacer"></span>
+          <button type="button" id="cancel-btn" class="export-btn">Cancel</button>
+          <button type="submit" id="save-btn" class="primary-btn">Add to calendar</button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- ---------- Settings dialog ---------- -->
+    <dialog id="settings-dialog" class="dialog">
+      <form method="dialog" id="settings-form">
+        <h2>Editor settings</h2>
+        <p class="settings-note">
+          These keys are saved only in this browser (never in the page or the repo). Visitors
+          without them see the public calendar and can't change it.
+        </p>
+        <label>Anthropic API key <span class="hint-text">for AI cleanup</span>
+          <input id="s-anthropic" type="password" autocomplete="off" placeholder="sk-ant-…" />
+        </label>
+        <label>GitHub token <span class="hint-text">fine-grained, Contents: read &amp; write on this repo only</span>
+          <input id="s-github" type="password" autocomplete="off" placeholder="github_pat_…" />
+        </label>
+        <label>Repository <span class="hint-text">owner/name</span>
+          <input id="s-repo" type="text" placeholder="readchaoticera/editorial-calendar" />
+        </label>
+        <p class="settings-note small">
+          Without a GitHub token, ideas you add are kept in this browser only. Without an Anthropic
+          key, a simple built-in cleaner is used instead of Claude.
+        </p>
+        <div class="dialog-actions">
+          <button type="button" id="s-clear" class="danger-btn">Forget keys</button>
+          <span class="spacer"></span>
+          <button type="button" id="s-cancel" class="export-btn">Cancel</button>
+          <button type="submit" class="primary-btn">Save</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script src="app.js"></script>
+  </body>
+</html>
